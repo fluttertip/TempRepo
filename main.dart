@@ -1,59 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:o2openai/login/login.dart';
-import 'Pages/HomePage.dart';
-import 'package:o2openai/Themes/themes_const.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences sp = await SharedPreferences.getInstance();
-  bool darkmode = sp.getBool("darkmode") ?? false;
-  bool islogin = sp.getBool("islogin") ?? false;
-  String name = sp.getString("name") ?? "";
-  String imagepath = sp.getString("imagepath") ?? "";
+final ThemeData customlighttheme = ThemeData(
+//custom theme for the container and text
 
-  runApp(MyApp(
-    darkmode: darkmode,
-    islogin: islogin,
-    name: name,
-    imagepath: imagepath,
-  ));
-}
-// it think now this recording is far good then other
-//now  i think this is good recording than other
+  brightness: Brightness.light,
+  scaffoldBackgroundColor: Colors.grey[300],
+  appBarTheme: const AppBarTheme(
+      backgroundColor: Color.fromARGB(255, 220, 220, 222),
+      foregroundColor: Colors.black),
+  //elevated button
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ButtonStyle(
+      backgroundColor:
+          MaterialStateProperty.all<Color>(Color.fromARGB(255, 186, 17, 102)),
+      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+    ),
+  ),
+);
+////
+final ThemeData customdarktheme = ThemeData(
+  brightness: Brightness.dark,
+  scaffoldBackgroundColor: const Color.fromARGB(255, 52, 53, 65),
+  appBarTheme: const AppBarTheme(
+      backgroundColor: Color.fromARGB(255, 62, 63, 75),
+      foregroundColor: Colors.white),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ButtonStyle(
+      backgroundColor:
+          MaterialStateProperty.all<Color>(Color.fromARGB(210, 186, 17, 101)),
+      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+    ),
+  ),
+);
 
-class MyApp extends StatefulWidget {
-  bool darkmode;
-  bool islogin;
-  String? name;
-  String? imagepath;
-
-  MyApp({
-    super.key,
-    required this.darkmode,
-    required this.islogin,
-    this.name,
-    this.imagepath,
-  });
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: widget.darkmode ? customdarktheme : customlighttheme,
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-          body: widget.islogin
-              ? HomePage(
-                  darkmode: widget.darkmode,
-                  islogin: widget.islogin,
-                )
-              : LoginScreen(
-                  darkmode: widget.darkmode,
-                )),
-    );
-  }
-}
+// rgba(62,63,75,255)
+// rgba(52,53,65,255)
+// rgba(247,247,248,255)
+// rgba(255,255,255,255)

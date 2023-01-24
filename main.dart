@@ -1,94 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:o2openai/apikey/apikey.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:o2openai/apikey/apikey.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class ImageGeneratingOpenApi extends StatefulWidget {
-  const ImageGeneratingOpenApi({super.key});
+class TextCompletion extends StatefulWidget {
+  const TextCompletion({super.key});
 
   @override
-  State<ImageGeneratingOpenApi> createState() => _ImageGeneratingOpenApiState();
+  State<TextCompletion> createState() => _TextCompletionState();
 }
 
-class _ImageGeneratingOpenApiState extends State<ImageGeneratingOpenApi> {
-  var finalimages =
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjB8TzJsR7ENk2PpjL9pem0W27QYdxT-qgCg&usqp=CAU';
-  final apikeys = api_keys;
-  TextEditingController TextToImage = TextEditingController();
+class _TextCompletionState extends State<TextCompletion> {
+  TextEditingController textsolution = TextEditingController();
 
-  Future<void> imagegenerate() async {
-    final url = Uri.parse("https://api.openai.com/v1/images/generations");
+  // List<dynamic> textanswer = [];
+  String finaltextanswer = "";
+  Future<void> generateAnswer() async {
+    final url = Uri.parse(
+        "https://api.openai.com/v1/engines/davinci-codex/completions");
     final headers = {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $apikeys"
+      "Authorization": "Bearer $api_keys"
     };
+    final body = jsonEncode(
+        {"prompt": textsolution.text, "temperature": 0.5, "max_tokens": 100});
 
-    var response = await http.post(url,
-        headers: headers,
-        body: jsonEncode({
-          "prompt": TextToImage.text,
-          "n": 3,
-          "size": "256x256",
-        }));
-    // print(response.statusCode);
+    final response = await http.post(url, headers: headers, body: body);
+
     if (response.statusCode == 200) {
-      var responseJson = jsonDecode(response.body);
-
-      finalimages = responseJson['data'][0]['url'];
+      final json = jsonDecode(response.body);
+      finaltextanswer = json['choices'][0]['text'];
+      print(finaltextanswer);
     } else {
-      // print("failed to generate image");
+      throw Exception("Failed to generate answer: ${response.statusCode}");
     }
-    // print(finalimages);
+    print(finaltextanswer);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(slivers: [
-        SliverAppBar(
-          toolbarHeight: MediaQuery.of(context).size.height * 0.07,
-          automaticallyImplyLeading: false,
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.arrow_back),
+      appBar: AppBar(
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.07,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back),
+          color: Colors.black,
+        ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.more_vert),
             color: Colors.black,
           ),
-          centerTitle: false,
-          actions: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                FontAwesomeIcons.sun,
-                color: Color.fromARGB(255, 62, 63, 75),
-              ),
-            ),
-          ],
-          title: const Text("Image Generation Beta",
-              style: TextStyle(
-                color: Color.fromARGB(255, 62, 63, 75),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              )),
-          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        ],
+        title: const Text(
+          "Text Completion",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        SliverList(
-            delegate: SliverChildListDelegate([
-          SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-          Container(
-            height: MediaQuery.of(context).size.height * 0.1,
-            padding: const EdgeInsets.all(10),
-            child: TextField(
-              controller: TextToImage,
-              onSubmitted: (value) async {
-                setState(() {
-                  finalimages = "";
-                });
-              },
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SingleChildScrollView(
+            child: Column(
+          children: [
+            //textformfield with validation
+            TextField(
+              controller: textsolution,
               decoration: InputDecoration(
-                hintText: "Search for an image",
+                hintText: "Ask Anything",
                 hintStyle: const TextStyle(
                   color: Color.fromARGB(255, 62, 63, 75),
                   fontSize: 20,
@@ -96,8 +87,7 @@ class _ImageGeneratingOpenApiState extends State<ImageGeneratingOpenApi> {
                 ),
                 suffixIcon: IconButton(
                   onPressed: () {
-                    //clear text in textfield
-                    TextToImage.clear();
+                    textsolution.clear();
                   },
                   icon: const Icon(
                     Icons.clear,
@@ -123,90 +113,35 @@ class _ImageGeneratingOpenApiState extends State<ImageGeneratingOpenApi> {
                       color: Colors.green.shade200),
                 ),
               ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            height: MediaQuery.of(context).size.height * 0.8,
-            child: FutureBuilder(
-              future: imagegenerate(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  // print(finalimages.length);
-                  return Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 5),
-                        height: 256,
-                        width: 256,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(finalimages.toString()),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      //download button here
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromARGB(255, 245, 245, 246),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                "Download",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 17,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromARGB(255, 245, 245, 246),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                "Share",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 17,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  );
-                } else {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.grey[300],
-                    ),
-                  );
-                }
+              onSubmitted: (value) async {
+                setState(() {});
               },
             ),
-          )
-        ]))
-      ]),
+            SizedBox(height: 20),
+
+            //show the finaltextanswer calling the futurebuilder function
+            FutureBuilder(
+                future: generateAnswer(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return Text(
+                      finaltextanswer,
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 62, 63, 75),
+                        fontSize: 20,
+                        // fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  } else {
+                    return const Center(
+                        child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ));
+                  }
+                }),
+          ],
+        )),
+      ),
     );
   }
 }
